@@ -1,0 +1,9 @@
+temp/
+backend/.env
+frontend/.env
+./backend/node_modules
+./frontend/node_modules
+
+./PRD.md
+./TECHNICAL-DOCS.md
+./PROMPTS.md
