@@ -460,10 +460,10 @@ export const seedDatabase = async () => {
       await User.create({
         name: 'Travel Bharat Admin',
         email: 'admin@travelbharat.gov.in',
-        password: 'admin123', // Will be hashed by user model pre-save hook
+        password: process.env.ADMIN_PASSWORD, // Will be hashed by user model pre-save hook
         role: 'admin',
       });
-      console.log('[Seed] Admin user created: admin@travelbharat.gov.in / admin123');
+      console.log('[Seed] Admin user created: admin@travelbharat.gov.in / ' + process.env.ADMIN_PASSWORD);
     }
 
     // Seed Temples
