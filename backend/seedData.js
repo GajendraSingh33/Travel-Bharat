@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Temple from './models/Temple.js';
 import Circuit from './models/Circuit.js';
 import User from './models/User.js';
@@ -523,4 +525,9 @@ const startSeeding = async () => {
   }
 };
 
-startSeeding();
+const currentFilePath = fileURLToPath(import.meta.url);
+const executedScriptPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
+
+if (executedScriptPath === currentFilePath) {
+  startSeeding();
+}

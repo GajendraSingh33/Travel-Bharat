@@ -1,13 +1,39 @@
 import mongoose from 'mongoose';
 
+const getMongoConnectionString = () =>
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/travel_bharat';
+
+export const isDbConnected = () => mongoose.connection.readyState === 1;
+
+let connectPromise = null;
+
 const connectDB = async () => {
-  try {
-    const connStr = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/travel_bharat';
-    const conn = await mongoose.connect(connStr);
-    console.log(`[MongoDB] Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`[MongoDB Error] ${error.message}`);
-    console.warn(`[MongoDB Warning] Continuing with in-memory/fallback mode for offline development.`);
+  if (isDbConnected()) {
+    return mongoose.connection;
+  }
+
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  const connStr = getMongoConnectionString();
+
+  connectPromise = mongoose
+    .connect(connStr)
+    .then((conn) => {
+      console.log(`[MongoDB] Connected: ${conn.connection.host}`);
+      return conn;
+    })
+    .finally(() => {
+      connectPromise = null;
+    });
+
+  return connectPromise;
+};
+
+export const ensureDbConnection = async () => {
+  if (!isDbConnected()) {
+    await connectDB();
   }
 };
 

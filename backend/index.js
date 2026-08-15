@@ -15,9 +15,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 app.use(cors({
   origin: true,
@@ -59,6 +56,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`[Server] Travel Bharat API server running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error(`[MongoDB Error] ${error.message}`);
+    console.warn('[MongoDB Warning] Starting API in limited mode. Admin authentication requires MongoDB connectivity.');
+  }
+
+  app.listen(PORT, () => {
+    console.log(`[Server] Travel Bharat API server running on http://localhost:${PORT}`);
+  });
+};
+
+startServer();
