@@ -139,3 +139,5 @@ Constraints
 
 this is the details and requirements of my new mern stack project, start developing a production ready project in travel bharat directory where backend and frontend forlders are already made.
 at the end list all the neccesory task that should be done by me.
+
+

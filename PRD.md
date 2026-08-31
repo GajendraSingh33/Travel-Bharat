@@ -56,7 +56,7 @@ Pilgrims and cultural heritage enthusiasts visiting temples across India face si
 - Nearby Facilities: Dharamshalas & Hotels, Rail/Airport Connectivity, Multi-level Parking, Prasadam Canteens.
 
 ### 5.3 Admin Content Management System (CMS)
-- Secure JWT-based Admin authentication (`admin@travelbharat.gov.in` / `admin123`).
+- Secure JWT-based Admin authentication.
 - Approval Workflow: Approve or reject submitted temple entries.
 - Toggle Featured Status for homepage highlights.
 - Database Seed trigger endpoint (`/api/seed`).
