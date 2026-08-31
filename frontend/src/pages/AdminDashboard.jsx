@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   FaShieldAlt,
   FaPlus,
@@ -10,6 +11,8 @@ import {
   FaSignOutAlt,
   FaLock,
   FaUser,
+  FaUpload,
+  FaExternalLinkAlt,
 } from 'react-icons/fa';
 import {
   fetchTemples,
@@ -21,13 +24,14 @@ import {
   seedDatabaseAdmin,
 } from '../services/api';
 
-const AdminDashboard = () => {
-  const [token, setToken] = useState(localStorage.getItem('tb_admin_token') || '');
-  const [adminUser, setAdminUser] = useState(JSON.parse(localStorage.getItem('tb_admin_user') || 'null'));
+const AdminDashboard = ({ currentUser, onAuthSuccess, onLogout }) => {
+  const isCurrentAdmin = currentUser && currentUser.role === 'admin';
+  const token = isCurrentAdmin ? currentUser.token || localStorage.getItem('tb_auth_token') || '' : '';
+  const adminUser = isCurrentAdmin ? currentUser : null;
 
-  // Auth Form State
-  const [email, setEmail] = useState('admin@travelbharat.gov.in');
-  const [password, setPassword] = useState('admin123');
+  // Auth Form State - Cleaned up hardcoded defaults
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
   // Dashboard Data State
@@ -47,6 +51,7 @@ const AdminDashboard = () => {
     deityName: '',
     deityCategory: 'Shaivism',
     history: '',
+    timing: '06:00 AM - 08:00 PM',
     architecturalStyle: 'Nagara / Dravidian',
     constructionEra: 'Ancient',
     heroImage: '',
@@ -66,14 +71,13 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (token) {
-      // Defer loading to avoid calling setState synchronously inside the effect body
+    if (token && isCurrentAdmin) {
       const id = setTimeout(() => {
         loadAdminTemples();
       }, 0);
       return () => clearTimeout(id);
     }
-  }, [token]);
+  }, [token, isCurrentAdmin]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -81,23 +85,21 @@ const AdminDashboard = () => {
     try {
       const data = await loginAdmin(email, password);
       if (data.role !== 'admin') {
-        setAuthError('Access denied: User is not an admin.');
+        setAuthError('Access denied: Account does not have admin privileges.');
         return;
       }
-      localStorage.setItem('tb_admin_token', data.token);
-      localStorage.setItem('tb_admin_user', JSON.stringify(data));
-      setToken(data.token);
-      setAdminUser(data);
+      if (onAuthSuccess) {
+        onAuthSuccess(data);
+      }
     } catch (err) {
-      setAuthError(err.response?.data?.message || 'Invalid credentials');
+      setAuthError(err.response?.data?.message || 'Invalid admin credentials');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('tb_admin_token');
-    localStorage.removeItem('tb_admin_user');
-    setToken('');
-    setAdminUser(null);
+  const handleLogoutClick = () => {
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const handleSeedDatabase = async () => {
@@ -123,6 +125,7 @@ const AdminDashboard = () => {
       deityName: '',
       deityCategory: 'Shaivism',
       history: '',
+      timing: '06:00 AM - 08:00 PM',
       architecturalStyle: 'Nagara / Dravidian',
       constructionEra: 'Ancient',
       heroImage: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80',
@@ -144,6 +147,7 @@ const AdminDashboard = () => {
       deityName: t.deity?.name || '',
       deityCategory: t.deity?.category || 'Shaivism',
       history: t.history || '',
+      timing: t.darshanTimings?.[0]?.timing || '06:00 AM - 08:00 PM',
       architecturalStyle: t.architecturalStyle || '',
       constructionEra: t.constructionEra || '',
       heroImage: t.heroImage || '',
@@ -158,6 +162,21 @@ const AdminDashboard = () => {
   const handleSaveTemple = async (e) => {
     e.preventDefault();
     try {
+      const existingTimings = editingTemple?.darshanTimings;
+      let darshanTimings;
+      if (editingTemple && Array.isArray(existingTimings) && existingTimings.length > 0) {
+        darshanTimings = existingTimings.map((entry, idx) => {
+          if (idx === 0 && formData.timing?.trim()) {
+            return { ...entry, timing: formData.timing.trim() };
+          }
+          return entry;
+        });
+      } else {
+        darshanTimings = [
+          { title: 'General Darshan Slot', timing: formData.timing?.trim() || '06:00 AM - 08:00 PM', note: 'General Queue' }
+        ];
+      }
+
       const payload = {
         name: formData.name,
         state: formData.state,
@@ -175,13 +194,11 @@ const AdminDashboard = () => {
         cameraPolicy: formData.cameraPolicy,
         isFeatured: formData.isFeatured,
         isApproved: formData.isApproved,
-        rituals: [
+        rituals: editingTemple?.rituals ?? [
           { name: 'Mangala Aarti', timing: '05:00 AM', description: 'Morning awakening prayers' },
           { name: 'Evening Sandhya Aarti', timing: '07:00 PM', description: 'Evening light offering' }
         ],
-        darshanTimings: [
-          { title: 'General Public Slot', timing: '06:00 AM - 08:00 PM', note: 'General queue' }
-        ]
+        darshanTimings,
       };
 
       if (editingTemple) {
@@ -238,7 +255,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} autoComplete="off" className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Admin Email</label>
               <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
@@ -247,7 +264,9 @@ const AdminDashboard = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@example.com"
                   required
+                  autoComplete="off"
                   className="w-full bg-transparent focus:outline-none text-xs font-medium text-slate-800"
                 />
               </div>
@@ -261,7 +280,9 @@ const AdminDashboard = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter admin password"
                   required
+                  autoComplete="new-password"
                   className="w-full bg-transparent focus:outline-none text-xs font-medium text-slate-800"
                 />
               </div>
@@ -290,9 +311,9 @@ const AdminDashboard = () => {
               <span>Admin Control Center</span>
             </div>
             <h1 className="font-serif-cultural text-2xl sm:text-3xl font-extrabold text-amber-100">
-              Temple Heritage Management Portal
+              Travel Bharat Management Portal
             </h1>
-            <p className="text-slate-400 text-xs">Logged in as {adminUser?.name || 'Administrator'} ({adminUser?.email})</p>
+            <p className="text-slate-400 text-xs">Logged in as {adminUser?.name || 'Administrator'}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -310,14 +331,6 @@ const AdminDashboard = () => {
             >
               <FaPlus />
               <span>Add New Temple</span>
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-rose-900 text-slate-300 hover:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-700 transition-all"
-            >
-              <FaSignOutAlt />
-              <span>Logout</span>
             </button>
           </div>
         </div>
@@ -369,19 +382,29 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {temples.map((t) => (
-                  <tr key={t._id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-900 flex items-center space-x-3">
-                      <img
-                        src={t.heroImage || 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=100&q=80'}
-                        alt={t.name}
-                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                      />
-                      <div>
-                        <span className="block">{t.name}</span>
-                        {t.isFeatured && (
-                          <span className="text-[10px] text-amber-600 font-bold">★ Featured</span>
-                        )}
-                      </div>
+                  <tr key={t._id} className="hover:bg-amber-50/40 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-900">
+                      <Link
+                        to={`/temple/${t.slug || t._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-3 group/temple text-left hover:text-amber-700 transition-colors"
+                        title="Click to view temple detail page"
+                      >
+                        <img
+                          src={t.heroImage || 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=100&q=80'}
+                          alt={t.name}
+                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0 group-hover/temple:scale-105 transition-transform shadow-sm"
+                        />
+                        <div>
+                          <span className="block font-bold text-slate-900 group-hover/temple:text-amber-700 group-hover/temple:underline underline-offset-2">
+                            {t.name}
+                          </span>
+                          {t.isFeatured && (
+                            <span className="text-[10px] text-amber-600 font-bold">★ Featured</span>
+                          )}
+                        </div>
+                      </Link>
                     </td>
 
                     <td className="px-6 py-4 font-medium text-slate-600">
@@ -406,7 +429,16 @@ const AdminDashboard = () => {
                       </button>
                     </td>
 
-                    <td className="px-6 py-4 text-right space-x-2">
+                    <td className="px-6 py-4 text-right space-x-1.5">
+                      <Link
+                        to={`/temple/${t.slug || t._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:text-amber-700 hover:bg-amber-100 transition-colors"
+                        title="Open Temple Detail Page"
+                      >
+                        <FaExternalLinkAlt size={13} />
+                      </Link>
                       <button
                         onClick={() => handleOpenEditModal(t)}
                         className="p-2 rounded-lg text-amber-700 hover:bg-amber-100 transition-colors"
@@ -522,25 +554,57 @@ const AdminDashboard = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Hero Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.heroImage}
-                    onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-amber-500 font-medium"
-                    placeholder="https://images.unsplash.com/..."
-                  />
+                  <label className="block font-bold text-slate-700 mb-1">Add Image *</label>
+                  <div className="flex items-center space-x-3">
+                    <label className="flex-1 flex items-center justify-center space-x-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-amber-400 text-slate-700 font-semibold px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-xs">
+                      <FaUpload className="text-amber-600" />
+                      <span className="truncate">{formData.heroImage ? 'Change Image File' : 'Upload Image File'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFormData((prev) => ({ ...prev, heroImage: reader.result }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    {formData.heroImage && (
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-300 bg-slate-100 flex-shrink-0">
+                        <img src={formData.heroImage} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Architectural Style</label>
+                  <label className="block font-bold text-slate-700 mb-1">Temple Timings *</label>
                   <input
                     type="text"
-                    value={formData.architecturalStyle}
-                    onChange={(e) => setFormData({ ...formData, architecturalStyle: e.target.value })}
+                    required
+                    value={formData.timing}
+                    onChange={(e) => setFormData({ ...formData, timing: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-amber-500 font-medium"
+                    placeholder="e.g. 06:00 AM - 08:00 PM"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Architectural Style</label>
+                <input
+                  type="text"
+                  value={formData.architecturalStyle}
+                  onChange={(e) => setFormData({ ...formData, architecturalStyle: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-amber-500 font-medium"
+                  placeholder="Nagara / Dravidian"
+                />
               </div>
 
               <div className="flex items-center space-x-6 pt-2">

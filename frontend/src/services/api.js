@@ -9,9 +9,8 @@ const api = axios.create({
   },
 });
 
-// Interceptor to add JWT token if exists
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('tb_admin_token');
+  const token = localStorage.getItem('tb_auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -86,8 +85,28 @@ export const fetchStats = async () => {
   }
 };
 
+export const loginUser = async (email, password) => {
+  const response = await api.post('/auth/login', { email, password, loginType: 'pilgrim' });
+  return response.data;
+};
+
+export const registerUser = async ({ name, email, password }) => {
+  const response = await api.post('/auth/register', { name, email, password });
+  return response.data;
+};
+
+export const getUserProfile = async () => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
+export const toggleSavedTempleForCurrentUser = async (templeId) => {
+  const response = await api.patch(`/auth/saved-temples/${templeId}`);
+  return response.data;
+};
+
 export const loginAdmin = async (email, password) => {
-  const response = await api.post('/auth/login', { email, password });
+  const response = await api.post('/auth/login', { email, password, loginType: 'admin' });
   return response.data;
 };
 

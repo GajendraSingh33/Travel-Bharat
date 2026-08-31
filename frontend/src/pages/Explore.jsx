@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FaSearch, FaRedo } from 'react-icons/fa';
 import TempleCard from '../components/TempleCard';
 import { fetchTemples, fetchFilterOptions } from '../services/api';
+import { isTempleSaved } from '../utils/templeUtils';
 
 const Explore = ({ savedTemples = [], onToggleSave }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -231,7 +232,7 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
               <TempleCard
                 key={temple._id}
                 temple={temple}
-                isSaved={savedTemples.some((t) => t._id === temple._id)}
+                isSaved={isTempleSaved(savedTemples, temple)}
                 onToggleSave={onToggleSave}
               />
             ))}

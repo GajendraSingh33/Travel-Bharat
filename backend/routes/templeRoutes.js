@@ -20,7 +20,7 @@ router.get('/filters', getFilterOptions);
 router.get('/:id', getTempleByIdOrSlug);
 
 // Admin / Public submission routes
-router.post('/', createTemple);
+router.post('/', protect, adminOnly, createTemple);
 router.put('/:id', protect, adminOnly, updateTemple);
 router.delete('/:id', protect, adminOnly, deleteTemple);
 router.patch('/:id/approve', protect, adminOnly, approveTemple);

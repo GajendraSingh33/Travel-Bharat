@@ -58,12 +58,6 @@ const Footer = () => {
                   <span>Saved Itinerary Planner</span>
                 </Link>
               </li>
-              <li>
-                <Link to="/docs" className="hover:text-amber-400 transition-colors flex items-center space-x-2">
-                  <span>•</span>
-                  <span>PRD & Architecture Docs</span>
-                </Link>
-              </li>
             </ul>
           </div>
 

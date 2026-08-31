@@ -20,6 +20,7 @@ import {
   FaTimes,
 } from 'react-icons/fa';
 import { fetchTempleBySlugOrId } from '../services/api';
+import { isTempleSaved } from '../utils/templeUtils';
 
 const TempleDetail = ({ savedTemples = [], onToggleSave }) => {
   const { slug } = useParams();
@@ -69,7 +70,7 @@ const TempleDetail = ({ savedTemples = [], onToggleSave }) => {
     );
   }
 
-  const isSaved = savedTemples.some((t) => t._id === temple._id);
+  const isSaved = isTempleSaved(savedTemples, temple);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);

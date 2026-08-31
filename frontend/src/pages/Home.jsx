@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch, FaMapMarkerAlt, FaCompass, FaOm, FaLandmark, FaRoute, FaCheckCircle, FaUsers, FaArrowRight, FaShieldAlt } from 'react-icons/fa';
 import TempleCard from '../components/TempleCard';
 import { fetchFeaturedTemples, fetchStats, fetchCircuits } from '../services/api';
+import { isTempleSaved } from '../utils/templeUtils';
 
 const Home = ({ savedTemples = [], onToggleSave }) => {
   const [featuredTemples, setFeaturedTemples] = useState([]);
@@ -62,9 +63,9 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
   };
 
   return (
-    <div className="space-y-16 pb-16">
+    <div className="pb-16">
       {/* HERO SECTION */}
-      <section className="relative min-h-[85vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-slate-950 text-white">
+      <section className="relative min-h-[92vh] sm:min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden bg-slate-950 text-white">
         {/* Background Image overlay */}
         <div className="absolute inset-0 z-0 opacity-40">
           <img
@@ -150,14 +151,14 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
       </section>
 
       {/* KPI STATS TICKER */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-20">
         <div className="bg-white rounded-2xl shadow-xl border border-amber-200/80 p-6 sm:p-8 grid grid-cols-2 lg:grid-cols-4 gap-6 text-center divide-y lg:divide-y-0 lg:divide-x divide-amber-100">
           <div className="space-y-1">
             <div className="flex justify-center text-amber-600 text-2xl mb-1">
               <FaLandmark />
             </div>
             <div className="font-serif-cultural text-3xl font-extrabold text-slate-900">
-              {stats.totalTemples || 10}+
+              {stats.totalTemples || 20}+
             </div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Temples Documented
@@ -203,7 +204,7 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
       </section>
 
       {/* FEATURED TEMPLES SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-amber-200 pb-4">
           <div>
             <span className="text-amber-700 font-bold text-xs uppercase tracking-widest block">
@@ -235,7 +236,7 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
               <TempleCard
                 key={temple._id}
                 temple={temple}
-                isSaved={savedTemples.some((t) => t._id === temple._id)}
+                isSaved={isTempleSaved(savedTemples, temple)}
                 onToggleSave={onToggleSave}
               />
             ))}
@@ -244,7 +245,7 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
       </section>
 
       {/* SACRED PILGRIMAGE CIRCUITS */}
-      <section className="bg-gradient-to-br from-amber-950 to-slate-950 text-white py-16">
+      <section className="bg-gradient-to-br from-amber-950 to-slate-950 text-white py-16 mt-16 sm:mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-amber-400 font-bold text-xs uppercase tracking-widest block">
@@ -306,7 +307,7 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
       </section>
 
       {/* CULTURAL HERITAGE & VISITOR ETIQUETTE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 sm:mt-20">
         <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 lg:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="space-y-6">
             <div>

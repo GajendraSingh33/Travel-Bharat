@@ -9,6 +9,7 @@ import templeRoutes from './routes/templeRoutes.js';
 import circuitRoutes from './routes/circuitRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import { seedDatabase } from './seedData.js';
+import { protect, adminOnly } from './middleware/authMiddleware.js';
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ app.use('/api/circuits', circuitRoutes);
 app.use('/api/stats', statsRoutes);
 
 // Seed API endpoint
-app.post('/api/seed', async (req, res) => {
+app.post('/api/seed', protect, adminOnly, async (req, res) => {
   try {
     await seedDatabase();
     res.json({ message: 'Database seeded successfully with authentic Indian temple dataset and admin user.' });
