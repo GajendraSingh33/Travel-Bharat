@@ -63,7 +63,7 @@ const AdminDashboard = ({ currentUser, onAuthSuccess, onLogout }) => {
 
   const loadAdminTemples = async () => {
     try {
-      const data = await fetchTemples({ isApproved: undefined }); // Fetch all regardless of approval
+      const data = await fetchTemples({ isApproved: 'all' }); // Admin: fetch all temples regardless of approval
       setTemples(data || []);
     } catch (err) {
       console.error('Error loading admin temples:', err);

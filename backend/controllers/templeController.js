@@ -1,5 +1,6 @@
 import Temple from '../models/Temple.js';
-import { sampleTemples } from '../seedData.js';
+import Circuit from '../models/Circuit.js';
+import { sampleTemples, sampleCircuits } from '../seedData.js';
 import mongoose from 'mongoose';
 
 // Utility helper to generate slug
@@ -16,21 +17,35 @@ const slugify = (text) => {
 // Check if MongoDB connection is ready
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
+export const REGION_STATE_MAP = {
+  'North India': ['Uttarakhand', 'Uttar Pradesh', 'Punjab', 'Himachal Pradesh', 'Jammu & Kashmir', 'Delhi', 'Haryana', 'Ladakh'],
+  'South India': ['Tamil Nadu', 'Andhra Pradesh', 'Telangana', 'Karnataka', 'Kerala'],
+  'West India': ['Gujarat', 'Maharashtra', 'Rajasthan', 'Goa'],
+  'East India': ['Odisha', 'West Bengal', 'Jharkhand', 'Bihar', 'Assam', 'Sikkim', 'Arunachal Pradesh', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Tripura'],
+  'Central India': ['Madhya Pradesh', 'Chhattisgarh']
+};
+
 export const getTemples = async (req, res) => {
   try {
-    const { search, state, city, deity, circuit, isApproved, isFeatured } = req.query;
+    const { search, state, city, deity, circuit, region, isApproved, isFeatured } = req.query;
 
     if (isDbConnected()) {
       let query = {};
 
-      if (isApproved !== undefined) {
+      if (isApproved !== undefined && isApproved !== 'all') {
         query.isApproved = isApproved === 'true';
-      } else {
+      } else if (isApproved === undefined) {
         query.isApproved = true; // Default to approved for public
       }
+      // isApproved === 'all' → no filter, return everything
 
       if (isFeatured !== undefined) {
         query.isFeatured = isFeatured === 'true';
+      }
+
+      if (region && REGION_STATE_MAP[region]) {
+        const statesInRegion = REGION_STATE_MAP[region];
+        query.state = { $in: statesInRegion.map((s) => new RegExp(`^${s}$`, 'i')) };
       }
 
       if (state) {
@@ -46,17 +61,47 @@ export const getTemples = async (req, res) => {
       }
 
       if (circuit) {
-        query.circuitTags = { $regex: circuit, $options: 'i' };
+        const cleanCircuit = circuit.replace(/\s*\([^)]*\)/g, '').trim();
+        const matchingCircuit = await Circuit.findOne({
+          $or: [
+            { name: { $regex: circuit, $options: 'i' } },
+            { name: { $regex: cleanCircuit, $options: 'i' } },
+            { slug: { $regex: circuit, $options: 'i' } },
+            { slug: { $regex: slugify(cleanCircuit), $options: 'i' } },
+          ],
+        });
+
+        if (matchingCircuit && matchingCircuit.templeIds && matchingCircuit.templeIds.length > 0) {
+          query.$or = [
+            { _id: { $in: matchingCircuit.templeIds } },
+            { circuitTags: { $regex: circuit, $options: 'i' } },
+            { circuitTags: { $regex: cleanCircuit, $options: 'i' } },
+          ];
+        } else {
+          query.$or = [
+            { circuitTags: { $regex: circuit, $options: 'i' } },
+            { circuitTags: { $regex: cleanCircuit, $options: 'i' } },
+          ];
+        }
       }
 
       if (search) {
-        query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { state: { $regex: search, $options: 'i' } },
-          { city: { $regex: search, $options: 'i' } },
-          { 'deity.name': { $regex: search, $options: 'i' } },
-          { history: { $regex: search, $options: 'i' } },
+        const searchRegex = { $regex: search, $options: 'i' };
+        const searchConditions = [
+          { name: searchRegex },
+          { state: searchRegex },
+          { city: searchRegex },
+          { 'deity.name': searchRegex },
+          { history: searchRegex },
+          { circuitTags: searchRegex },
         ];
+        if (query.$or) {
+          const circuitOr = [...query.$or];
+          delete query.$or;
+          query.$and = [{ $or: circuitOr }, { $or: searchConditions }];
+        } else {
+          query.$or = searchConditions;
+        }
       }
 
       const temples = await Temple.find(query).sort({ isFeatured: -1, createdAt: -1 });
@@ -65,6 +110,40 @@ export const getTemples = async (req, res) => {
 
     // Fallback to sample seed data if DB not connected
     let results = sampleTemples;
+
+    if (region && REGION_STATE_MAP[region]) {
+      const allowedStates = REGION_STATE_MAP[region].map((s) => s.toLowerCase());
+      results = results.filter((t) => t.state && allowedStates.includes(t.state.toLowerCase()));
+    }
+
+    if (circuit) {
+      const cleanCircuit = circuit.replace(/\s*\([^)]*\)/g, '').trim();
+      const circuitObj = sampleCircuits.find(
+        (c) =>
+          c.name.toLowerCase().includes(circuit.toLowerCase()) ||
+          c.name.toLowerCase().includes(cleanCircuit.toLowerCase()) ||
+          c.slug.toLowerCase().includes(circuit.toLowerCase())
+      );
+      if (circuitObj && circuitObj.templeIds) {
+        results = results.filter(
+          (t) =>
+            circuitObj.templeIds.includes(t._id) ||
+            t.circuitTags.some(
+              (cTag) =>
+                cTag.toLowerCase().includes(circuit.toLowerCase()) ||
+                cTag.toLowerCase().includes(cleanCircuit.toLowerCase())
+            )
+        );
+      } else {
+        results = results.filter((t) =>
+          t.circuitTags.some(
+            (cTag) =>
+              cTag.toLowerCase().includes(circuit.toLowerCase()) ||
+              cTag.toLowerCase().includes(cleanCircuit.toLowerCase())
+          )
+        );
+      }
+    }
 
     if (state) {
       results = results.filter((t) => t.state.toLowerCase().includes(state.toLowerCase()));
@@ -75,9 +154,6 @@ export const getTemples = async (req, res) => {
     if (deity) {
       results = results.filter((t) => t.deity.name.toLowerCase().includes(deity.toLowerCase()));
     }
-    if (circuit) {
-      results = results.filter((t) => t.circuitTags.some((c) => c.toLowerCase().includes(circuit.toLowerCase())));
-    }
     if (search) {
       const q = search.toLowerCase();
       results = results.filter(
@@ -86,7 +162,8 @@ export const getTemples = async (req, res) => {
           t.state.toLowerCase().includes(q) ||
           t.city.toLowerCase().includes(q) ||
           t.deity.name.toLowerCase().includes(q) ||
-          t.history.toLowerCase().includes(q)
+          t.history.toLowerCase().includes(q) ||
+          (t.circuitTags && t.circuitTags.some((cTag) => cTag.toLowerCase().includes(q)))
       );
     }
     if (isFeatured === 'true') {
@@ -142,19 +219,58 @@ export const getTempleByIdOrSlug = async (req, res) => {
 
 export const getFilterOptions = async (req, res) => {
   try {
+    const regions = ['North India', 'South India', 'West India', 'East India', 'Central India'];
+
     if (isDbConnected()) {
       const states = await Temple.distinct('state');
       const cities = await Temple.distinct('city');
       const deities = await Temple.distinct('deity.name');
-      const circuits = await Temple.distinct('circuitTags');
-      return res.json({ states, cities, deities, circuits });
+      const templeCircuits = await Temple.distinct('circuitTags');
+      const circuitDocs = await Circuit.distinct('name');
+      const circuits = [...new Set([...templeCircuits, ...circuitDocs])].filter(Boolean);
+
+      const stateCityAgg = await Temple.aggregate([
+        { $match: { isApproved: true, state: { $ne: null, $exists: true }, city: { $ne: null, $exists: true } } },
+        { $group: { _id: '$state', cities: { $addToSet: '$city' } } },
+        { $sort: { _id: 1 } },
+      ]);
+
+      const stateCitiesMap = {};
+      stateCityAgg.forEach((item) => {
+        if (item._id) {
+          stateCitiesMap[item._id] = (item.cities || []).sort();
+        }
+      });
+
+      return res.json({
+        states: states.sort(),
+        cities: cities.sort(),
+        deities: deities.sort(),
+        circuits: circuits.sort(),
+        regions,
+        stateCitiesMap,
+      });
     }
 
-    const states = [...new Set(sampleTemples.map((t) => t.state))];
-    const cities = [...new Set(sampleTemples.map((t) => t.city))];
-    const deities = [...new Set(sampleTemples.map((t) => t.deity.name))];
-    const circuits = [...new Set(sampleTemples.flatMap((t) => t.circuitTags))];
-    res.json({ states, cities, deities, circuits });
+    const states = [...new Set(sampleTemples.map((t) => t.state))].sort();
+    const cities = [...new Set(sampleTemples.map((t) => t.city))].sort();
+    const deities = [...new Set(sampleTemples.map((t) => t.deity.name))].sort();
+    const circuits = [...new Set([...sampleTemples.flatMap((t) => t.circuitTags), ...sampleCircuits.map((c) => c.name)])].sort();
+
+    const stateCitiesMap = {};
+    sampleTemples.forEach((t) => {
+      if (t.state && t.city) {
+        if (!stateCitiesMap[t.state]) {
+          stateCitiesMap[t.state] = [];
+        }
+        if (!stateCitiesMap[t.state].includes(t.city)) {
+          stateCitiesMap[t.state].push(t.city);
+        }
+      }
+    });
+    Object.keys(stateCitiesMap).forEach((st) => stateCitiesMap[st].sort());
+
+    res.json({ states, cities, deities, circuits, regions, stateCitiesMap });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -168,6 +284,11 @@ export const createTemple = async (req, res) => {
     }
 
     if (isDbConnected()) {
+      // Handle duplicate slug by appending timestamp
+      const existingSlug = await Temple.findOne({ slug: templeData.slug });
+      if (existingSlug) {
+        templeData.slug = templeData.slug + '-' + Date.now();
+      }
       const created = await Temple.create(templeData);
       return res.status(201).json(created);
     }
@@ -181,16 +302,31 @@ export const createTemple = async (req, res) => {
     sampleTemples.unshift(mockCreated);
     res.status(201).json(mockCreated);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    const statusCode = error.name === 'ValidationError' || error.code === 11000 ? 400 : 500;
+    res.status(statusCode).json({ message: error.message });
   }
 };
 
 export const updateTemple = async (req, res) => {
   try {
     const { id } = req.params;
+    const updateData = { ...req.body };
+
+    // Auto-generate slug from name if name is updated but slug isn't provided
+    if (updateData.name && !updateData.slug) {
+      const existing = await Temple.findById(id);
+      if (existing) {
+        updateData.slug = existing.slug; // Keep existing slug to avoid duplicate
+      }
+    }
 
     if (isDbConnected()) {
-      const updated = await Temple.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+      // Use $set to avoid runValidators requiring all required fields
+      const updated = await Temple.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
       if (!updated) return res.status(404).json({ message: 'Temple not found' });
       return res.json(updated);
     }
@@ -202,7 +338,8 @@ export const updateTemple = async (req, res) => {
     }
     res.status(404).json({ message: 'Temple not found' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    const statusCode = error.name === 'ValidationError' || error.code === 11000 ? 400 : 500;
+    res.status(statusCode).json({ message: error.message });
   }
 };
 

@@ -68,39 +68,33 @@ const Footer = () => {
             </h3>
             <ul className="grid grid-cols-2 gap-2 text-sm">
               <li>
-                <Link to="/explore?state=Uttar Pradesh" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
+                <Link to="/region/North%20India" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
                   <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Varanasi / UP</span>
+                  <span>North India</span>
                 </Link>
               </li>
               <li>
-                <Link to="/explore?state=Uttarakhand" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
+                <Link to="/region/South%20India" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
                   <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Uttarakhand</span>
+                  <span>South India</span>
                 </Link>
               </li>
               <li>
-                <Link to="/explore?state=Tamil Nadu" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
+                <Link to="/region/East%20India" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
                   <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Tamil Nadu</span>
+                  <span>East India</span>
                 </Link>
               </li>
               <li>
-                <Link to="/explore?state=Andhra Pradesh" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
+                <Link to="/region/West%20India" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
                   <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Tirupati / AP</span>
+                  <span>West India</span>
                 </Link>
               </li>
               <li>
-                <Link to="/explore?state=Gujarat" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
+                <Link to="/region/Central%20India" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
                   <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Somnath / Guj</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/explore?state=Odisha" className="hover:text-amber-400 transition-colors flex items-center space-x-1">
-                  <FaMapMarkerAlt className="text-amber-500 text-xs" />
-                  <span>Puri / Odisha</span>
+                  <span>Central India</span>
                 </Link>
               </li>
             </ul>

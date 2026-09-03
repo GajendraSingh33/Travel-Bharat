@@ -21,7 +21,6 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [state, setState] = useState(searchParams.get('state') || '');
   const [city, setCity] = useState(searchParams.get('city') || '');
-  const [deity, setDeity] = useState(searchParams.get('deity') || '');
   const [circuit, setCircuit] = useState(searchParams.get('circuit') || '');
 
   useEffect(() => {
@@ -33,6 +32,13 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
   }, []);
 
   useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+    setState(searchParams.get('state') || '');
+    setCity(searchParams.get('city') || '');
+    setCircuit(searchParams.get('circuit') || '');
+  }, [searchParams]);
+
+  useEffect(() => {
     const loadTemplesData = async () => {
       setLoading(true);
       try {
@@ -40,7 +46,6 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
         if (search) queryParams.search = search;
         if (state) queryParams.state = state;
         if (city) queryParams.city = city;
-        if (deity) queryParams.deity = deity;
         if (circuit) queryParams.circuit = circuit;
 
         const data = await fetchTemples(queryParams);
@@ -53,16 +58,53 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
     };
 
     loadTemplesData();
-  }, [search, state, city, deity, circuit]);
+  }, [search, state, city, circuit]);
+
+  const updateFilterParams = (updatedFilters) => {
+    const nextSearch = updatedFilters.search !== undefined ? updatedFilters.search : search;
+    const nextState = updatedFilters.state !== undefined ? updatedFilters.state : state;
+    const nextCity = updatedFilters.city !== undefined ? updatedFilters.city : city;
+    const nextCircuit = updatedFilters.circuit !== undefined ? updatedFilters.circuit : circuit;
+
+    setSearch(nextSearch);
+    setState(nextState);
+    setCity(nextCity);
+    setCircuit(nextCircuit);
+
+    const params = {};
+    if (nextSearch) params.search = nextSearch;
+    if (nextState) params.state = nextState;
+    if (nextCity) params.city = nextCity;
+    if (nextCircuit) params.circuit = nextCircuit;
+
+    setSearchParams(params);
+  };
+
+  const handleSearchChange = (newSearch) => {
+    updateFilterParams({ search: newSearch });
+  };
+
+  const handleStateChange = (newState) => {
+    updateFilterParams({ state: newState, city: '' });
+  };
+
+  const handleCityChange = (newCity) => {
+    updateFilterParams({ city: newCity });
+  };
+
+  const handleCircuitChange = (newCircuit) => {
+    updateFilterParams({ circuit: newCircuit });
+  };
 
   const handleResetFilters = () => {
     setSearch('');
     setState('');
     setCity('');
-    setDeity('');
     setCircuit('');
     setSearchParams({});
   };
+
+  const availableCities = state ? filterOptions.stateCitiesMap?.[state] || [] : [];
 
   return (
     <div className="pt-24 pb-16 min-h-screen bg-amber-50/30">
@@ -79,7 +121,7 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
             Explore Sacred Temples of India
           </h1>
           <p className="text-amber-200/80 text-sm max-w-2xl">
-            Filter by state, city, deity, or pilgrimage circuit tag to discover complete heritage details, daily pooja schedules, and darshan guidelines.
+            Filter by region, state, city, deity, or pilgrimage circuit tag to discover complete heritage details, daily pooja schedules, and darshan guidelines.
           </p>
         </div>
 
@@ -93,7 +135,7 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
                 type="text"
                 placeholder="Search by temple name, deity, or history..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full bg-transparent focus:outline-none text-slate-800 text-sm font-medium"
               />
             </div>
@@ -109,7 +151,7 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
           </div>
 
           {/* Multi-Filter Dropdowns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             {/* State Filter */}
             <div>
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -117,10 +159,10 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
               </label>
               <select
                 value={state}
-                onChange={(e) => setState(e.target.value)}
+                onChange={(e) => handleStateChange(e.target.value)}
                 className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl focus:border-amber-500 focus:outline-none"
               >
-                <option value="">All States ({filterOptions.states?.length || 0})</option>
+                <option value="">Select State</option>
                 {filterOptions.states?.map((st) => (
                   <option key={st} value={st}>
                     {st}
@@ -129,41 +171,33 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
               </select>
             </div>
 
-            {/* City Filter */}
+            {/* Dependent City Filter */}
             <div>
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                City / Region
+                City / Location
               </label>
               <select
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl focus:border-amber-500 focus:outline-none"
+                onChange={(e) => handleCityChange(e.target.value)}
+                disabled={!state}
+                className={`w-full border text-xs font-semibold px-3 py-2 rounded-xl focus:outline-none transition-colors ${
+                  state
+                    ? 'bg-white border-slate-200 text-slate-800 focus:border-amber-500'
+                    : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
               >
-                <option value="">All Cities</option>
-                {filterOptions.cities?.map((ct) => (
-                  <option key={ct} value={ct}>
-                    {ct}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Deity Filter */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                Deity
-              </label>
-              <select
-                value={deity}
-                onChange={(e) => setDeity(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl focus:border-amber-500 focus:outline-none"
-              >
-                <option value="">All Deities</option>
-                {filterOptions.deities?.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
+                {!state ? (
+                  <option value="">Select a state first</option>
+                ) : (
+                  <>
+                    <option value="">Select a City</option>
+                    {availableCities.map((ct) => (
+                      <option key={ct} value={ct}>
+                        {ct}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
             </div>
 
@@ -174,7 +208,7 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
               </label>
               <select
                 value={circuit}
-                onChange={(e) => setCircuit(e.target.value)}
+                onChange={(e) => handleCircuitChange(e.target.value)}
                 className="w-full bg-white border border-slate-200 text-slate-800 text-xs font-semibold px-3 py-2 rounded-xl focus:border-amber-500 focus:outline-none"
               >
                 <option value="">All Circuits</option>
@@ -193,11 +227,11 @@ const Explore = ({ savedTemples = [], onToggleSave }) => {
           <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
             Showing <span className="text-amber-700 font-black">{temples.length}</span> Temples
           </p>
-          {(state || city || deity || circuit || search) && (
+          {(search || state || city || circuit) && (
             <div className="flex flex-wrap gap-1.5 text-xs">
+              {search && <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">Search: {search}</span>}
               {state && <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">State: {state}</span>}
               {city && <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">City: {city}</span>}
-              {deity && <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">Deity: {deity}</span>}
               {circuit && <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold">Circuit: {circuit}</span>}
             </div>
           )}

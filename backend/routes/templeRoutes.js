@@ -19,9 +19,12 @@ router.get('/featured', getFeaturedTemples);
 router.get('/filters', getFilterOptions);
 router.get('/:id', getTempleByIdOrSlug);
 
+const json10mb = express.json({ limit: '10mb' });
+const urlencoded10mb = express.urlencoded({ extended: true, limit: '10mb' });
+
 // Admin / Public submission routes
-router.post('/', protect, adminOnly, createTemple);
-router.put('/:id', protect, adminOnly, updateTemple);
+router.post('/', json10mb, urlencoded10mb, protect, adminOnly, createTemple);
+router.put('/:id', json10mb, urlencoded10mb, protect, adminOnly, updateTemple);
 router.delete('/:id', protect, adminOnly, deleteTemple);
 router.patch('/:id/approve', protect, adminOnly, approveTemple);
 router.patch('/:id/feature', protect, adminOnly, toggleFeaturedTemple);

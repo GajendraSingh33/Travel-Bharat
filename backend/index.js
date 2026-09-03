@@ -21,8 +21,12 @@ app.use(cors({
   origin: true,
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Route-specific parser for endpoints requiring large request bodies (e.g., temple creation/update with images)
+app.use('/api/temples', express.json({ limit: '10mb' }), express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global body-parser with smaller safe default for other endpoints
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 
 // Routes
@@ -54,6 +58,9 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'Request body is too large. Please use an image URL instead of uploading a large file.' });
+  }
   res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 

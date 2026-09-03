@@ -15,20 +15,8 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
     activeUsersEstimate: 24500,
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedState, setSelectedState] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  const statesList = [
-    'Uttar Pradesh',
-    'Uttarakhand',
-    'Tamil Nadu',
-    'Andhra Pradesh',
-    'Gujarat',
-    'Odisha',
-    'Punjab',
-    'Jammu & Kashmir',
-  ];
 
   useEffect(() => {
     const loadHomeData = async () => {
@@ -54,11 +42,12 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchTerm.trim() || selectedState) {
+    if (searchTerm.trim()) {
       const params = new URLSearchParams();
-      if (searchTerm) params.set('search', searchTerm);
-      if (selectedState) params.set('state', selectedState);
+      params.set('search', searchTerm.trim());
       navigate(`/explore?${params.toString()}`);
+    } else {
+      navigate('/explore');
     }
   };
 
@@ -94,59 +83,30 @@ const Home = ({ savedTemples = [], onToggleSave }) => {
             Explore authentic temple histories, darshan schedules, live festival calendars, dress codes, and location-based pilgrimage routes across every state in India.
           </p>
 
-          {/* Search Box */}
+          {/* Minimal & Premium Search Box */}
           <form
             onSubmit={handleSearchSubmit}
-            className="max-w-3xl mx-auto bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-2xl border border-amber-300/40 flex flex-col sm:flex-row items-center gap-2 text-slate-900"
+            className="max-w-2xl mx-auto bg-white/95 backdrop-blur-md p-2 rounded-2xl shadow-2xl border border-amber-300/40 flex items-center gap-2 text-slate-900"
           >
-            <div className="flex-1 flex items-center space-x-3 px-3 py-2 w-full">
+            <div className="flex-1 flex items-center space-x-3 px-4 py-2.5">
               <FaSearch className="text-amber-600 text-lg flex-shrink-0" />
               <input
                 type="text"
-                placeholder="Search by temple name, deity, or ritual (e.g. Kashi, Shiva)..."
+                placeholder="Search temples by name, deity, city, state, or history..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-transparent focus:outline-none text-slate-800 placeholder-slate-400 text-sm sm:text-base font-medium"
               />
             </div>
 
-            <div className="w-full sm:w-auto flex items-center space-x-2">
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className="bg-amber-50/80 border border-amber-200 text-slate-800 text-xs font-semibold px-3 py-2.5 rounded-xl focus:outline-none cursor-pointer"
-              >
-                <option value="">All States</option>
-                {statesList.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                type="submit"
-                className="w-full sm:w-auto bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2"
-              >
-                <span>Search</span>
-                <FaArrowRight />
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold px-7 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 flex-shrink-0"
+            >
+              <span>Search</span>
+              <FaArrowRight />
+            </button>
           </form>
-
-          {/* Quick State Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs">
-            <span className="text-amber-300/70 font-semibold mr-1">Popular States:</span>
-            {statesList.slice(0, 5).map((st) => (
-              <button
-                key={st}
-                onClick={() => navigate(`/explore?state=${st}`)}
-                className="bg-amber-900/40 hover:bg-amber-600/30 text-amber-200 hover:text-white border border-amber-500/20 px-3 py-1 rounded-full transition-all"
-              >
-                {st}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 

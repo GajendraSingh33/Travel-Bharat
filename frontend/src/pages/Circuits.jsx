@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaRoute, FaArrowRight, FaOm } from 'react-icons/fa';
+import {FaArrowRight, FaOm } from 'react-icons/fa';
 import { fetchCircuits } from '../services/api';
 
 const Circuits = () => {
@@ -76,10 +76,6 @@ const Circuits = () => {
                 {/* Right Details */}
                 <div className="lg:col-span-2 p-6 sm:p-8 flex flex-col justify-between space-y-6">
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-amber-700 uppercase tracking-wider">
-                      <FaRoute />
-                      <span>Distance: {circuit.totalDistance}</span>
-                    </div>
 
                     <h2 className="font-serif-cultural text-2xl sm:text-3xl font-extrabold text-slate-900">
                       {circuit.name}
@@ -92,7 +88,7 @@ const Circuits = () => {
                     {circuit.significance && (
                       <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200/80 space-y-1">
                         <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">Spiritual Significance</span>
-                        <p className="text-xs text-slate-700">{circuit.significance}</p>
+                        <p className="text-xs text-slate-700">{circuit.significance}</p> 
                       </div>
                     )}
                   </div>
@@ -100,11 +96,13 @@ const Circuits = () => {
                   {/* Circuit Temple Stops */}
                   {circuit.templeIds && circuit.templeIds.length > 0 && (
                     <div className="space-y-2 pt-2 border-t border-slate-100">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                        Included Temple Stopovers:
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                          Preview Temple Stopovers ({circuit.templeIds.length} Total):
+                        </span>
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {circuit.templeIds.map((t, idx) => (
+                        {circuit.templeIds.slice(0, 4).map((t, idx) => (
                           <Link
                             key={t._id || idx}
                             to={`/temple/${t.slug || t._id}`}
@@ -114,6 +112,15 @@ const Circuits = () => {
                             <span>{t.name || `Temple ${idx + 1}`}</span>
                           </Link>
                         ))}
+                        {circuit.templeIds.length > 4 && (
+                          <Link
+                            to={`/explore?circuit=${encodeURIComponent(circuit.name)}`}
+                            className="bg-amber-200/80 hover:bg-amber-300 text-amber-950 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-400 transition-colors flex items-center space-x-1"
+                          >
+                            <span>+{circuit.templeIds.length - 4} More Temples</span>
+                            <FaArrowRight className="text-[10px]" />
+                          </Link>
+                        )}
                       </div>
                     </div>
                   )}

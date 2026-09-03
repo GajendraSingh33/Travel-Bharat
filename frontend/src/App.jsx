@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Explore from './pages/Explore';
 import TempleDetail from './pages/TempleDetail';
+import RegionDetail from './pages/RegionDetail';
 import Circuits from './pages/Circuits';
 import SavedTemples from './pages/SavedTemples';
 import AdminDashboard from './pages/AdminDashboard';
@@ -66,22 +67,20 @@ const AuthModal = ({ isOpen, mode, onClose, onSubmit, error, initialMessage, onM
           <button
             type="button"
             onClick={() => onModeChange('login')}
-            className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${
-              mode === 'login'
+            className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${mode === 'login'
                 ? 'border-amber-600 text-amber-700 font-extrabold bg-amber-50/50 rounded-t-xl'
                 : 'border-transparent text-slate-500 hover:text-amber-800'
-            }`}
+              }`}
           >
             Login
           </button>
           <button
             type="button"
             onClick={() => onModeChange('register')}
-            className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${
-              mode === 'register'
+            className={`flex-1 py-2.5 text-xs font-bold border-b-2 transition-all ${mode === 'register'
                 ? 'border-amber-600 text-amber-700 font-extrabold bg-amber-50/50 rounded-t-xl'
                 : 'border-transparent text-slate-500 hover:text-amber-800'
-            }`}
+              }`}
           >
             Create Pilgrim Account
           </button>
@@ -377,6 +376,10 @@ function App() {
             <Route
               path="/temple/:slug"
               element={<TempleDetail savedTemples={savedTemples} onToggleSave={handleToggleSave} />}
+            />
+            <Route
+              path="/region/:regionName"
+              element={<RegionDetail savedTemples={savedTemples} onToggleSave={handleToggleSave} />}
             />
             <Route path="/circuits" element={<Circuits />} />
             <Route

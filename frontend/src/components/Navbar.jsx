@@ -245,7 +245,7 @@ const Navbar = ({ savedCount = 0, currentUser = null, onOpenAuthModal, onLogout,
                         type="button"
                         onClick={() => {
                           setIsProfileOpen(false);
-                          onOpenAuthModal('login', '', 'pilgrim');
+                          onOpenAuthModal('login');
                         }}
                         className="w-full text-left p-2.5 rounded-xl bg-amber-900/40 hover:bg-amber-900/80 border border-amber-500/20 hover:border-amber-500/60 transition-all group/item"
                       >
@@ -283,12 +283,12 @@ const Navbar = ({ savedCount = 0, currentUser = null, onOpenAuthModal, onLogout,
                         type="button"
                         onClick={() => {
                           setIsProfileOpen(false);
-                          onOpenAuthModal('register', '✨ Create a new pilgrim account to save temples.', 'pilgrim');
+                          onOpenAuthModal('register');
                         }}
                         className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1"
                       >
                         <FaUserPlus className="text-[6px]" />
-                        <span>Create Pilgrim Account</span>
+                        <span>Create Account</span>
                       </button>
                     </div>
                   </>
@@ -393,24 +393,24 @@ const Navbar = ({ savedCount = 0, currentUser = null, onOpenAuthModal, onLogout,
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onOpenAuthModal('login', '', 'pilgrim');
+                    onOpenAuthModal('login');
                   }}
                   className="w-full flex items-center justify-center space-x-2 bg-amber-900/50 hover:bg-amber-900 text-amber-100 px-4 py-2.5 rounded-lg text-sm font-semibold border border-amber-500/30"
                 >
                   <FaUser className="text-amber-400" />
-                  <span>Pilgrim Login</span>
+                  <span>Login</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onOpenAuthModal('register', '✨ Create a new pilgrim account to save temples.', 'pilgrim');
+                    onOpenAuthModal('register', 'pilgrim');
                   }}
                   className="w-full flex items-center justify-center space-x-2 bg-amber-800/60 hover:bg-amber-800 text-amber-100 px-4 py-2.5 rounded-lg text-sm font-semibold border border-amber-400/40"
                 >
                   <FaUserPlus className="text-amber-300" />
-                  <span>Create Pilgrim Account</span>
+                  <span>Create Account</span>
                 </button>
 
                 <Link
